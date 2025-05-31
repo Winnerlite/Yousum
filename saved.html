@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Summarizer - Saved</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --dark: #0f0f0f;
+            --darker: #030303;
+            --light: #f1f1f1;
+            --gray: #272727;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--darker);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            gap: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid var(--gray);
+        }
+        
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        
+        .nav-btn.active {
+            color: var(--primary);
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--gray);
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 1.5rem;
+        }
+        
+        .summary-container {
+            background-color: var(--darker);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+        
+        .delete-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .summary-content {
+            line-height: 1.6;
+        }
+        
+        .summary-content h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+        
+        .summary-content p {
+            margin-bottom: 0.8rem;
+            line-height: 1.6;
+        }
+        
+        .summary-content strong {
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .bottom-nav {
+                gap: 1rem;
+                padding: 0.7rem 1.2rem;
+            }
+            
+            .nav-btn {
+                font-size: 1.1rem;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="margin-bottom: 1.5rem;">Saved Summaries</h1>
+        <div id="summariesList"></div>
+    </div>
+    
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-btn">
+            <i class="fas fa-search"></i>
+        </a>
+        <button class="nav-btn active" disabled>
+            <i class="fas fa-bookmark"></i>
+        </button>
+        <a href="history.html" class="nav-btn">
+            <i class="fas fa-history"></i>
+        </a>
+    </div>
+
+    <script>
+        function displaySummaries() {
+            const summariesList = document.getElementById('summariesList');
+            const summaries = JSON.parse(localStorage.getItem('savedSummaries') || '[]');
+            
+            if (summaries.length === 0) {
+                summariesList.innerHTML = '<p class="error">No saved summaries found.</p>';
+                return;
+            }
+            
+            summaries.forEach((summary, index) => {
+                const summaryContainer = document.createElement('div');
+                summaryContainer.className = 'summary-container';
+                summaryContainer.innerHTML = `
+                    <div class="summary-header">
+                        <h2 class="summary-title">${summary.title}</h2>
+                        <button class="delete-btn" onclick="deleteSummary(${index})">
+                            Delete
+                        </button>
+                    </div>
+                    <div class="summary-content">${summary.summary.replace(/\n/g, '<br>')}</div>
+                    <p style="color: #aaa; font-size: 0.9rem; margin-top: 1rem;">
+                        Saved on: ${new Date(summary.timestamp).toLocaleString()}
+                    </p>
+                `;
+                summariesList.appendChild(summaryContainer);
+            });
+        }
+
+        function deleteSummary(index) {
+            const summaries = JSON.parse(localStorage.getItem('savedSummaries') || '[]');
+            summaries.splice(index, 1);
+            localStorage.setItem('savedSummaries', JSON.stringify(summaries));
+            displaySummaries();
+        }
+
+        function init() {
+            displaySummaries();
+        }
+
+        init();
+    </script>
+</body>
+</html>
