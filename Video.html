@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Summary | YT Summarizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --dark: #0f0f0f;
+            --darker: #030303;
+            --light: #f1f1f1;
+            --gray: #272727;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--darker);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            gap: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid var(--gray);
+        }
+        
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        
+        .nav-btn.active {
+            color: var(--primary);
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--gray);
+        }
+        
+        /* Video Page */
+        .container {
+            max-width: 100%;
+            padding: 1.5rem;
+        }
+        
+        .video-page {
+            padding: 1rem 0;
+        }
+        
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            background: none;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+        }
+        
+        .video-player-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .video-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .summary-container {
+            background-color: var(--darker);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-title {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+        
+        .copy-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .summary-content {
+            line-height: 1.6;
+        }
+        
+        .summary-content ul {
+            padding-left: 1.2rem;
+        }
+        
+        .summary-content li {
+            margin-bottom: 0.8rem;
+            position: relative;
+        }
+        
+        .summary-content li:before {
+            content: "•";
+            color: var(--primary);
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+        
+        .error {
+            color: #ff6b6b;
+        }
+
+        .summary-content h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .summary-content p {
+            margin-bottom: 0.8rem;
+            line-height: 1.6;
+        }
+
+        .summary-content strong {
+            color: var(--primary);
+            margin-right: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .bottom-nav {
+                gap: 1rem;
+                padding: 0.7rem 1.2rem;
+            }
+            
+            .nav-btn {
+                font-size: 1.1rem;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-page">
+            <button class="back-btn" onclick="window.location.href='index.html'">
+                <i class="fas fa-arrow-left"></i> Back to search
+            </button>
+            
+            <div class="video-player-container">
+                <iframe class="video-player" id="videoPlayer" frameborder="0" allowfullscreen></iframe>
+            </div>
+            
+            <div class="summary-container">
+                <div class="summary-header">
+                    <h2 class="summary-title">AI Summary</h2>
+                    <button class="copy-btn" onclick="copySummary()">
+                        <i class="far fa-copy"></i> Copy
+                    </button>
+                </div>
+                <div class="summary-content" id="summaryContent">
+                    <div class="loading" id="loading">
+                        <i class="fas fa-spinner fa-spin"></i> Generating summary...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-btn">
+            <i class="fas fa-search"></i>
+        </a>
+        <a href="saved.html" class="nav-btn">
+            <i class="fas fa-bookmark"></i>
+        </a>
+        <a href="history.html" class="nav-btn">
+            <i class="fas fa-history"></i>
+        </a>
+    </div>
+
+    <script>
+        // API Configuration
+        const GEMINI_API_KEY = 'AIzaSyCt-Hu2WBkj0SBxaxVFckJFjkuHCBz9v_c';
+        const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+        
+        const API_PROVIDERS = [
+            {
+                name: "Transcript3",
+                endpoint: (videoId) => `https://youtube-transcript3.p.rapidapi.com/api/transcript?videoId=${videoId}`,
+                headers: {
+                    'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
+                    'x-rapidapi-key': 'bbcd1df015mshcbfd8a8f912f109p1f68a0jsn8e1dca2c166d'
+                },
+                format: (data) => data.transcript?.map(item => item.text).join(' ') || ''
+            },
+            {
+                name: "CaptionsCombiner", 
+                endpoint: (videoId) => `https://youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com/download-all/${videoId}?format_subtitle=srt&format_answer=json`,
+                headers: {
+                    'x-rapidapi-host': 'youtube-captions-transcript-subtitles-video-combiner.p.rapidapi.com',
+                    'x-rapidapi-key': 'your-backup-api-key-here'
+                },
+                format: (data) => Array.isArray(data) ? data.map(entry => entry.text).join(' ') : ''
+            }
+        ];
+
+        // DOM Elements
+        const videoPlayer = document.getElementById('videoPlayer');
+        const summaryContent = document.getElementById('summaryContent');
+        const loading = document.getElementById('loading');
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const videoId = getVideoIdFromURL();
+            
+            if (!videoId) {
+                showError("No video ID found in URL");
+                return;
+            }
+
+            videoPlayer.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            
+            try {
+                const { text: transcript } = await getTranscript(videoId);
+                const summary = await generateSummary(transcript);
+                loading.style.display = 'none';
+                summaryContent.innerHTML = formatSummary(summary);
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+
+        function getVideoIdFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('id');
+        }
+
+        async function getTranscript(videoId, retryCount = 0) {
+            const provider = API_PROVIDERS[retryCount % API_PROVIDERS.length];
+            
+            try {
+                const response = await fetch(provider.endpoint(videoId), {
+                    method: 'GET',
+                    headers: provider.headers
+                });
+
+                if (!response.ok) throw new Error(`${provider.name} API failed`);
+                
+                const data = await response.json();
+                return {
+                    text: provider.format(data),
+                    source: provider.name
+                };
+
+            } catch (error) {
+                if (retryCount < API_PROVIDERS.length - 1) {
+                    return getTranscript(videoId, retryCount + 1);
+                }
+                throw error;
+            }
+        }
+
+        async function generateSummary(transcript) {
+            const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Provide a detailed 10-point summary of this video transcript: ${transcript.substring(0, 30000)}`
+                        }]
+                    }]
+                })
+            });
+            
+            if (!response.ok) throw new Error('AI failed to generate summary');
+            
+            const data = await response.json();
+            return data.candidates[0].content.parts[0].text;
+        }
+
+        function formatSummary(rawText) {
+            let cleanText = rawText.replace(/\*\*/g, '')
+                                .replace(/\*/g, '')
+                                .replace(/```/g, '');
+            
+            const points = cleanText.split('\n')
+                .filter(line => line.trim().length > 0)
+                .map(point => `<p><strong>•</strong> ${point.trim()}</p>`)
+                .join('');
+            
+            return points;
+        }
+
+        function copySummary() {
+            const textToCopy = summaryContent.innerText;
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    const copyBtn = document.querySelector('.copy-btn');
+                    copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<i class="far fa-copy"></i> Copy';
+                    }, 2000);
+                });
+        }
+
+        function showError(message) {
+            loading.style.display = 'none';
+            summaryContent.innerHTML = `<p class="error">Error: ${message}</p>`;
+        }
+    </script>
+</body>
+</html>
