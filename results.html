@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Summarizer - Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --dark: #0f0f0f;
+            --darker: #030303;
+            --light: #f1f1f1;
+            --gray: #272727;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--darker);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            gap: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid var(--gray);
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+
+        .nav-btn.active {
+            color: var(--primary);
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+
+        .nav-btn:hover {
+            background-color: var(--gray);
+        }
+
+        /* Results Page */
+        .results-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .search-header {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+
+        .search-header input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid var(--gray);
+            border-radius: 30px 0 0 30px;
+            background-color: var(--darker);
+            color: var(--light);
+            outline: none;
+        }
+
+        .search-header button {
+            padding: 0 1.8rem;
+            font-size: 1.1rem;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .search-header button:hover {
+            background-color: #cc0000;
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .video-card {
+            background-color: var(--darker);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: var(--transition);
+            border: 1px solid var(--gray);
+            cursor: pointer;
+        }
+
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .thumbnail {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .video-info {
+            padding: 1rem;
+        }
+
+        .video-title {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .video-channel {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .video-duration {
+            color: var(--light);
+            font-size: 0.8rem;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
+
+        .thumbnail-container {
+            position: relative;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #ff6b6b;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        @media (max-width: 768px) {
+            .bottom-nav {
+                gap: 1rem;
+                padding: 0.7rem 1.2rem;
+            }
+
+            .nav-btn {
+                font-size: 1.1rem;
+                width: 36px;
+                height: 36px;
+            }
+
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="results-container">
+        <div class="search-header">
+            <input type="text" id="searchInput" placeholder="Search YouTube videos..." value="">
+            <button onclick="searchVideos()"><i class="fas fa-search"></i></button>
+        </div>
+
+        <div id="resultsContent">
+            <div class="loading" id="loadingIndicator">
+                <i class="fas fa-spinner fa-spin"></i> Loading results...
+            </div>
+            <div class="video-grid" id="videoResults"></div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-btn">
+            <i class="fas fa-search"></i>
+        </a>
+        <a href="saved.html" class="nav-btn">
+            <i class="fas fa-bookmark"></i>
+        </a>
+        <a href="history.html" class="nav-btn">
+            <i class="fas fa-history"></i>
+        </a>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+         
+         // At the top of your script section
+const STORAGE_KEY = 'ytSummarizer_searchResults';
+
+
+        // YouTube API setup
+        const API_KEY = 'AIzaSyBS1tt0v9_lLc5HAIAFMkTYbRzVUL27yI0';
+        const DISCOVERY_URL = 'https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest';
+
+        // Get search query from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        
+        // Set the search input value
+        document.getElementById('searchInput').value = query || '';
+
+        // Initialize the API when the page loads
+        window.onload = function() {
+            loadYouTubeAPI();
+        };
+
+        function loadYouTubeAPI() {
+    const STORAGE_KEY = 'ytSummarizer_searchResults';
+    const CACHE_EXPIRY = 3600000; // 1 hour in milliseconds
+    
+    // Check cache first
+    const cachedResults = localStorage.getItem(STORAGE_KEY);
+    const cachedData = cachedResults ? JSON.parse(cachedResults) : null;
+    
+    // Use cached results if:
+    // 1. They exist
+    // 2. Match the current query
+    // 3. Are not expired (within 1 hour)
+    if (cachedData && 
+        cachedData.query === query && 
+        Date.now() - cachedData.timestamp < CACHE_EXPIRY) {
+        
+        // Display cached results immediately
+        displayResults(cachedData.videos);
+        
+        // Still load the API in background for future searches
+        gapi.load('client', () => {
+            gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: [DISCOVERY_URL],
+            }).catch(error => {
+                console.error('Error loading YouTube API', error);
+            });
+        });
+        
+        return; // Exit early since we're using cached data
+    }
+    
+    // No valid cache - proceed with fresh API load
+    document.getElementById('loadingIndicator').style.display = 'block';
+    document.getElementById('videoResults').innerHTML = '';
+    
+    gapi.load('client', () => {
+        gapi.client.init({
+            apiKey: API_KEY,
+            discoveryDocs: [DISCOVERY_URL],
+        }).then(() => {
+            if (query) {
+                searchYouTubeVideos(query);
+            } else {
+                document.getElementById('loadingIndicator').style.display = 'none';
+            }
+        }).catch(error => {
+            console.error('Error loading YouTube API', error);
+            
+            // If API fails but we have stale cache, show that with warning
+            if (cachedData && cachedData.query === query) {
+                displayResults(cachedData.videos);
+                displayError("Using cached results - new data unavailable. " + 
+                            "Some information may be outdated.");
+            } else {
+                displayError("Failed to load YouTube data. Please try again later.");
+            }
+        });
+    });
+}
+
+        function searchYouTubeVideos(searchQuery) {
+            document.getElementById('loadingIndicator').style.display = 'block';
+            document.getElementById('videoResults').innerHTML = '';
+            
+            gapi.client.youtube.search.list({
+                part: 'snippet',
+                q: searchQuery,
+                maxResults: 12,
+                type: 'video',
+                order: 'relevance'
+            }).then(response => {
+                const videos = response.result.items;
+                if (videos.length === 0) {
+                    displayNoResults();
+                    return;
+                }
+                
+                // Get video durations and view counts
+                getVideoDetails(videos.map(video => video.id.videoId))
+                    .then(details => {
+                        const completeVideos = videos.map((video, index) => ({
+                            id: video.id.videoId,
+                            title: video.snippet.title,
+                            channel: video.snippet.channelTitle,
+                            thumbnail: video.snippet.thumbnails.medium ? video.snippet.thumbnails.medium.url : video.snippet.thumbnails.default.url,
+                            duration: details[index] ? formatDuration(details[index].duration) : 'N/A',
+                            viewCount: details[index] ? formatViewCount(details[index].viewCount) : 'N/A'
+                        }));
+                        displayResults(completeVideos);
+                    });
+            }).catch(error => {
+                console.error('Error searching videos', error);
+                displayError("Failed to search videos. Please try again.");
+            });
+        }
+
+        function getVideoDetails(videoIds) {
+            return gapi.client.youtube.videos.list({
+                part: 'contentDetails,statistics',
+                id: videoIds.join(',')
+            }).then(response => {
+                return response.result.items.map(item => ({
+                    duration: item.contentDetails.duration,
+                    viewCount: item.statistics.viewCount
+                }));
+            }).catch(error => {
+                console.error('Error getting video details', error);
+                return videoIds.map(() => ({}));
+            });
+        }
+
+        function formatDuration(isoDuration) {
+            // Convert ISO 8601 duration to readable format (e.g., PT15M33S -> 15:33)
+            const matches = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+            
+            const hours = matches[1] ? parseInt(matches[1]) : 0;
+            const minutes = matches[2] ? parseInt(matches[2]) : 0;
+            const seconds = matches[3] ? parseInt(matches[3]) : 0;
+            
+            if (hours > 0) {
+                return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else {
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function formatViewCount(count) {
+            if (!count) return 'N/A';
+            const num = parseInt(count);
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M views';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K views';
+            }
+            return num + ' views';
+        }
+
+        function displayResults(videos) {
+            const resultsContainer = document.getElementById('videoResults');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            loadingIndicator.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            // Cache the results
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        query: document.getElementById('searchInput').value,
+        videos: videos,
+        timestamp: Date.now()
+    }));
+    
+    
+            videos.forEach(video => {
+                const videoCard = document.createElement('div');
+                videoCard.className = 'video-card';
+                videoCard.innerHTML = `
+                    <div class="thumbnail-container">
+                        <img src="${video.thumbnail}" alt="${video.title}" class="thumbnail">
+                        <span class="video-duration">${video.duration}</span>
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">${video.title}</h3>
+                        <p class="video-channel">${video.channel} • ${video.viewCount}</p>
+                    </div>
+                `;
+                videoCard.addEventListener('click', () => {
+                    // Navigate to a video detail page or show summary
+                    window.location.href = `video.html?id=${video.id}`;
+                });
+                resultsContainer.appendChild(videoCard);
+            });
+        }
+
+        function displayError(message) {
+            const resultsContainer = document.getElementById('videoResults');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            loadingIndicator.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            resultsContainer.appendChild(errorDiv);
+        }
+
+        function displayNoResults() {
+            const resultsContainer = document.getElementById('videoResults');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            loadingIndicator.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            
+            const noResultsDiv = document.createElement('div');
+            noResultsDiv.className = 'no-results';
+            noResultsDiv.innerHTML = `<i class="fas fa-search"></i> No videos found for your search. Try different keywords.`;
+            resultsContainer.appendChild(noResultsDiv);
+        }
+
+        function searchVideos() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                window.location.href = `results.html?q=${encodeURIComponent(query)}`;
+            }
+        }
+
+        function init() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchVideos();
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
