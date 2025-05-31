@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YT Summarizer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #ff0000;
+            --dark: #0f0f0f;
+            --darker: #030303;
+            --light: #f1f1f1;
+            --gray: #272727;
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+            padding-bottom: 80px;
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--darker);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            display: flex;
+            gap: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            border: 1px solid var(--gray);
+        }
+        
+        .nav-btn {
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            text-decoration: none;
+        }
+        
+        .nav-btn.active {
+            color: var(--primary);
+            background-color: rgba(255, 0, 0, 0.1);
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--gray);
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 100%;
+            padding: 1.5rem;
+        }
+        
+        /* Search Page */
+        .search-page {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+            text-align: center;
+        }
+        
+        .logo {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .search-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 2rem 0;
+        }
+        
+        .search-bar {
+            display: flex;
+            width: 100%;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            font-size: 1.1rem;
+            border: 2px solid var(--gray);
+            border-radius: 30px 0 0 30px;
+            background-color: var(--darker);
+            color: var(--light);
+            outline: none;
+        }
+        
+        .search-bar button {
+            padding: 0 1.8rem;
+            font-size: 1.1rem;
+            border: none;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 0 30px 30px 0;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .search-bar button:hover {
+            background-color: #cc0000;
+        }
+        
+        .disclaimer {
+            margin-top: 1rem;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+        
+        /* Results Page */
+        .results-page {
+            display: none;
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .video-card {
+            background-color: var(--darker);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .video-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .video-thumbnail {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            overflow: hidden;
+        }
+        
+        .video-thumbnail img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .video-info {
+            padding: 1rem;
+        }
+        
+        .video-title {
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .video-channel {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+        
+        .error {
+            color: #ff6b6b;
+        }
+        
+        @media (max-width: 768px) {
+            .video-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+            
+            .bottom-nav {
+                gap: 1rem;
+                padding: 0.7rem 1.2rem;
+            }
+            
+            .nav-btn {
+                font-size: 1.1rem;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Search Page -->
+        <div class="search-page" id="searchPage">
+            <div class="logo">
+                <i class="fab fa-youtube"></i>
+            </div>
+            <h1>YouTube Summarizer</h1>
+            <p>Get instant AI summaries of any YouTube video</p>
+            
+            <div class="search-container">
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Search YouTube videos...">
+                    <button onclick="searchVideos()"><i class="fas fa-search"></i></button>
+                </div>
+                <p class="disclaimer">Videos watched cannot be saved for your privacy</p>
+            </div>
+        </div>
+        
+        <!-- Results Page -->
+        <div class="results-page" id="resultsPage">
+            <div class="video-grid" id="videoGrid">
+                <!-- Videos will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <i class="fas fa-spinner fa-spin"></i> Loading...
+        </div>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="index.html" class="nav-btn active">
+            <i class="fas fa-search"></i>
+        </a>
+        <a href="saved.html" class="nav-btn">
+            <i class="fas fa-bookmark"></i>
+        </a>
+        <a href="history.html" class="nav-btn">
+            <i class="fas fa-history"></i>
+        </a>
+    </div>
+
+    <script>
+        // YouTube API Configuration
+        const YOUTUBE_API_KEY = 'AIzaSyAlbWmxyzhL2RaNPNlPsANzY7R0JZUj_TU';
+        const YOUTUBE_API_URL = 'https://www.googleapis.com/youtube/v3/search';
+        
+        let currentVideos = [];
+
+        // DOM Elements
+        const searchPage = document.getElementById('searchPage');
+        const resultsPage = document.getElementById('resultsPage');
+        const videoGrid = document.getElementById('videoGrid');
+        const loading = document.getElementById('loading');
+        const searchInput = document.getElementById('searchInput');
+
+        // Search Videos
+        async function searchVideos() {
+            const query = searchInput.value.trim();
+            if (!query) return;
+            
+            loading.style.display = 'block';
+            searchPage.style.display = 'none';
+            resultsPage.style.display = 'block';
+            
+            try {
+                const response = await fetch(
+                    `${YOUTUBE_API_URL}?part=snippet&q=${encodeURIComponent(query)}&type=video&maxResults=50&key=${YOUTUBE_API_KEY}`
+                );
+                
+                if (!response.ok) throw new Error('Failed to fetch videos');
+                
+                const data = await response.json();
+                currentVideos = data.items;
+                displayVideos(currentVideos);
+                
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+                searchPage.style.display = 'flex';
+                resultsPage.style.display = 'none';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Display Videos
+        function displayVideos(videos) {
+            videoGrid.innerHTML = '';
+            
+            videos.forEach(video => {
+                const videoCard = document.createElement('div');
+                videoCard.className = 'video-card';
+                videoCard.innerHTML = `
+                    <div class="video-thumbnail">
+                        <img src="${video.snippet.thumbnails.medium.url}" alt="${video.snippet.title}">
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">${video.snippet.title}</h3>
+                        <p class="video-channel">${video.snippet.channelTitle}</p>
+                    </div>
+                `;
+                videoCard.addEventListener('click', () => {
+                    window.location.href = `video.html?id=${video.id.videoId}`;
+                });
+                videoGrid.appendChild(videoCard);
+            });
+        }
+
+        // Initialize
+        function init() {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchVideos();
+            });
+        }
+
+        // Run initialization
+        init();
+    </script>
+</body>
+</html>
